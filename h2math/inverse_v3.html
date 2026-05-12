@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inverse Function Existence Checker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .graph-container {
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+
+        .grid-line {
+            stroke: #e2e8f0;
+            stroke-width: 1;
+        }
+
+        .axis-line {
+            stroke: #64748b;
+            stroke-width: 2;
+        }
+
+        .function-path {
+            fill: none;
+            stroke: #3b82f6;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: d 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .horizontal-line {
+            stroke: #ef4444;
+            stroke-width: 2;
+            stroke-dasharray: 8 4;
+            opacity: 1; /* Always visible */
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-800">Inverse Function Challenge</h1>
+            <p class="text-slate-600 mt-2">Determine if the given function has an inverse</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Side: Graphing Area -->
+            <div class="graph-container aspect-square w-full">
+                <svg id="graph-svg" viewBox="0 0 400 400" class="w-full h-full cursor-crosshair">
+                    <!-- Grid Lines -->
+                    <g id="grid-group"></g>
+                    <!-- Axes -->
+                    <line x1="0" y1="200" x2="400" y2="200" class="axis-line" />
+                    <line x1="200" y1="0" x2="200" y2="400" class="axis-line" />
+                    <!-- Horizontal Line Test Tool (Enabled by default) -->
+                    <line id="h-line" x1="0" y1="200" x2="400" y2="200" class="horizontal-line" />
+                    <!-- Function -->
+                    <path id="func-path" class="function-path" d="" />
+                </svg>
+                <div id="h-line-label" class="absolute left-2 text-xs font-bold text-red-600 bg-white/80 px-1 rounded pointer-events-none" style="top: 190px;">
+                    y = 0.00
+                </div>
+            </div>
+
+            <!-- Right Side: Controls and Questions -->
+            <div class="flex flex-col gap-6">
+                <!-- Action Area -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <button onclick="generateNewFunction()" class="w-full mb-6 py-3 px-4 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        New Random Graph
+                    </button>
+
+                    <div id="display-placeholder" class="text-xl font-medium text-center mb-6 py-4 bg-slate-50 rounded-lg border-dashed border-2 border-slate-200 text-slate-400">
+                        Analyze y = f(x)
+                    </div>
+
+                    <div class="space-y-4">
+                        <p class="font-semibold text-slate-800 text-center">Does an inverse function exist?</p>
+                        <div class="flex gap-4">
+                            <button onclick="checkAnswer(true)" class="flex-1 py-3 px-4 rounded-lg border-2 border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-all font-bold">Yes</button>
+                            <button onclick="checkAnswer(false)" class="flex-1 py-3 px-4 rounded-lg border-2 border-slate-200 hover:border-red-500 hover:bg-red-50 transition-all font-bold">No</button>
+                        </div>
+                    </div>
+
+                    <div id="feedback" class="mt-6 hidden p-4 rounded-lg text-sm border leading-relaxed"></div>
+                </div>
+
+                <!-- Hint Toggle -->
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-bold text-blue-800 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+                            Horizontal Line Test Hint
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="toggle-hint" class="sr-only peer" onchange="toggleHint()">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
+                    </div>
+                    <div id="hint-content" class="hidden text-sm text-blue-700 italic border-t border-blue-200 mt-2 pt-2 space-y-2">
+                        <p><strong>Case 1 (One-to-one):</strong> Any horizontal line y=k, k &#8712; &#8477;, intersects the graph of y=f(x) at most once.</p>
+                        <p><strong>Case 2 (Not One-to-one):</strong> There exists a horizontal line y=(specific value) that intersects the graph of y=f(x) more than once.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Score -->
+        <div class="mt-8 flex justify-center gap-6 text-sm font-medium text-slate-500">
+            <span id="score-display">Correct: 0/0</span>
+            <button onclick="resetScore()" class="hover:text-slate-800 underline decoration-slate-300 underline-offset-4">Reset Progress</button>
+        </div>
+    </div>
+
+    <script>
+        let currentFunc = null;
+        let score = 0;
+        let total = 0;
+
+        const width = 400;
+        const height = 400;
+        const scale = 30;
+
+        function init() {
+            drawGrid();
+            generateNewFunction();
+            document.getElementById('graph-svg').addEventListener('mousemove', handleInputMove);
+            document.getElementById('graph-svg').addEventListener('touchmove', handleInputMove, {passive: false});
+        }
+
+        function drawGrid() {
+            const gridGroup = document.getElementById('grid-group');
+            for (let i = 0; i <= width; i += scale) {
+                const lineH = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                lineH.setAttribute("x1", 0); lineH.setAttribute("y1", i);
+                lineH.setAttribute("x2", width); lineH.setAttribute("y2", i);
+                lineH.setAttribute("class", "grid-line");
+                gridGroup.appendChild(lineH);
+
+                const lineV = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                lineV.setAttribute("x1", i); lineV.setAttribute("y1", 0);
+                lineV.setAttribute("x2", i); lineV.setAttribute("y2", height);
+                lineV.setAttribute("class", "grid-line");
+                gridGroup.appendChild(lineV);
+            }
+        }
+
+        function generateNewFunction() {
+            const types = ['linear', 'quadratic', 'cubic', 'absolute', 'sine', 'exponential'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const feedback = document.getElementById('feedback');
+            feedback.classList.add('hidden');
+
+            let a = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1); 
+            let b = Math.floor(Math.random() * 5) - 2; 
+
+            switch(type) {
+                case 'linear':
+                    currentFunc = {
+                        fn: (x) => a * x + b,
+                        inverse: true,
+                        k: 0
+                    };
+                    break;
+                case 'quadratic':
+                    let h = Math.floor(Math.random() * 3) - 1;
+                    currentFunc = {
+                        fn: (x) => a * Math.pow(x - h, 2) + b,
+                        inverse: false,
+                        k: b + (a > 0 ? 1 : -1)
+                    };
+                    break;
+                case 'cubic':
+                    currentFunc = {
+                        fn: (x) => a * Math.pow(x, 3) + b,
+                        inverse: true,
+                        k: 0
+                    };
+                    break;
+                case 'absolute':
+                    let shift = Math.floor(Math.random() * 2) - 1;
+                    currentFunc = {
+                        fn: (x) => a * Math.abs(x - shift) + b,
+                        inverse: false,
+                        k: b + (a > 0 ? 1 : -1)
+                    };
+                    break;
+                case 'sine':
+                    currentFunc = {
+                        fn: (x) => a * Math.sin(x) + b,
+                        inverse: false,
+                        k: b
+                    };
+                    break;
+                case 'exponential':
+                    let base = a > 0 ? 1.5 : 0.5;
+                    currentFunc = {
+                        fn: (x) => Math.pow(base, x) + b,
+                        inverse: true,
+                        k: b + 1
+                    };
+                    break;
+            }
+
+            renderFunction();
+        }
+
+        function renderFunction() {
+            const path = document.getElementById('func-path');
+            let d = "";
+            for (let px = 0; px <= width; px += 1) {
+                const x = (px - 200) / scale;
+                const y = currentFunc.fn(x);
+                const py = 200 - (y * scale);
+                const clampedPy = Math.max(-1000, Math.min(1000, py));
+                if (px === 0) d += `M ${px} ${clampedPy}`;
+                else d += ` L ${px} ${clampedPy}`;
+            }
+            path.setAttribute("d", d);
+        }
+
+        function toggleHint() {
+            const checked = document.getElementById('toggle-hint').checked;
+            document.getElementById('hint-content').style.display = checked ? "block" : "none";
+        }
+
+        function handleInputMove(e) {
+            if (e.type === 'touchmove') e.preventDefault();
+            const svg = document.getElementById('graph-svg');
+            const rect = svg.getBoundingClientRect();
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+            const y = clientY - rect.top;
+            
+            const line = document.getElementById('h-line');
+            const label = document.getElementById('h-line-label');
+            const clampedY = Math.max(0, Math.min(400, y));
+            
+            line.setAttribute("y1", clampedY);
+            line.setAttribute("y2", clampedY);
+            label.style.top = `${clampedY - 20}px`;
+            
+            const mathY = ((200 - clampedY) / scale).toFixed(2);
+            label.innerText = `y = ${mathY}`;
+        }
+
+        function checkAnswer(userChoice) {
+            const feedback = document.getElementById('feedback');
+            total++;
+
+            feedback.classList.remove('hidden', 'bg-green-50', 'text-green-800', 'border-green-200', 'bg-red-50', 'text-red-800', 'border-red-200', 'fade-in');
+            void feedback.offsetWidth; 
+            feedback.classList.add('fade-in');
+
+            const isCorrect = userChoice === currentFunc.inverse;
+            if (isCorrect) score++;
+
+            let explanation = "";
+            if (currentFunc.inverse) {
+                explanation = `Any horizontal line y=k, k \u2208 \u211D, intersects the graph of y=f(x) at most once.`;
+            } else {
+                explanation = `There exists a horizontal line y=${currentFunc.k.toFixed(1)} that intersects the graph of y=f(x) more than once.`;
+            }
+
+            if (isCorrect) {
+                feedback.classList.add('bg-green-50', 'text-green-800', 'border-green-200');
+                feedback.innerHTML = `<div class="font-bold mb-1">Correct!</div>${explanation}`;
+            } else {
+                feedback.classList.add('bg-red-50', 'text-red-800', 'border-red-200');
+                feedback.innerHTML = `<div class="font-bold mb-1">Incorrect.</div>${explanation}`;
+            }
+
+            updateScore();
+        }
+
+        function updateScore() {
+            document.getElementById('score-display').innerText = `Correct: ${score}/${total}`;
+        }
+
+        function resetScore() {
+            score = 0;
+            total = 0;
+            updateScore();
+            generateNewFunction();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
