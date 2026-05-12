@@ -120,9 +120,17 @@
                             <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                         </label>
                     </div>
-                    <div id="hint-content" class="hidden text-sm text-blue-700 italic border-t border-blue-200 mt-2 pt-2 space-y-2">
-                        <p><strong>Case 1 (One-to-one):</strong> Any horizontal line y=k, k &#8712; &#8477;, intersects the graph of y=f(x) at most once.</p>
-                        <p><strong>Case 2 (Not One-to-one):</strong> There exists a horizontal line y=(specific value) that intersects the graph of y=f(x) more than once.</p>
+                    <div id="hint-content" class="hidden text-sm text-blue-700 italic border-t border-blue-200 mt-2 pt-2 space-y-3">
+                        <div>
+                            <strong>Case 1 (One-to-one):</strong> 
+                            <p>Any horizontal line y=k, k &#8712; &#8477;, intersects the graph of y=f(x) at most once. 
+                            Hence f is one-one, f inverse exists.</p>
+                        </div>
+                        <div>
+                            <strong>Case 2 (Not One-to-one):</strong> 
+                            <p>There exists a horizontal line y=(specific value) that intersects the graph of y=f(x) more than once. 
+                            Hence f is not one-one, f inverse does not exist.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -279,9 +287,9 @@
 
             let explanation = "";
             if (currentFunc.inverse) {
-                explanation = `Any horizontal line y=k, k \u2208 \u211D, intersects the graph of y=f(x) at most once.`;
+                explanation = `Any horizontal line y=k, k \u2208 \u211D, intersects the graph of y=f(x) at most once. Hence f is one-one, f inverse exists.`;
             } else {
-                explanation = `There exists a horizontal line y=${currentFunc.k.toFixed(1)} that intersects the graph of y=f(x) more than once.`;
+                explanation = `There exists a horizontal line y=${currentFunc.k.toFixed(1)} that intersects the graph of y=f(x) more than once. Hence f is not one-one, f inverse does not exist.`;
             }
 
             if (isCorrect) {
